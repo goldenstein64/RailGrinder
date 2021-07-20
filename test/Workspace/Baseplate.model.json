@@ -1,0 +1,14 @@
+{
+  "ClassName": "Part",
+  "Properties": {
+    "Position": [0, -10, 0],
+    "Size": [1024, 20, 1024],
+
+    "Color": [0.29411765933037, 0.59215688705444, 0.29411765933037],
+    "Material": "Grass",
+    "Transparency": 0,
+
+    "CanCollide": true,
+    "Anchored": true
+  }
+}

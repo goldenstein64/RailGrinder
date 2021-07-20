@@ -1,0 +1,21 @@
+{
+  "ClassName": "SpawnLocation",
+  "Properties": {
+    "Position": [0, 0.5, 0],
+    "Size": [12, 1, 12],
+
+    "Anchored": true,
+    "CanCollide": true
+  },
+
+  "Children": [
+    {
+      "Name": "Decal",
+      "ClassName": "Decal",
+      "Properties": {
+        "Face": "Top",
+        "Texture": "rbxasset://textures/SpawnLocation.png"
+      }
+    }
+  ]
+}

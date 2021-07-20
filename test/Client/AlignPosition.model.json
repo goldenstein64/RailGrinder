@@ -1,0 +1,9 @@
+{
+  "ClassName": "AlignPosition",
+  "Properties": {
+    "Enabled": false,
+    "ApplyAtCenterOfMass": true,
+    "ReactionForceEnabled": false,
+    "RigidityEnabled": true
+  }
+}

@@ -20,8 +20,8 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
 
-      "StarterPlayerScripts": {
-        "$className": "StarterPlayerScripts",
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
         "$ignoreUnknownInstances": true,
         "$path": "test/Client"
       }

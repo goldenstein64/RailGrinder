@@ -1,1 +1,8 @@
 gitSourceBranch = "main"
+gitRepoUrl = "https://github.com/goldenstein64/RailGrinder"
+
+organizationName = "goldenstein64"
+projectName = "RailGrinder"
+url = "https://goldenstein64.github.io"
+baseUrl = "/RailGrinder"
+tagline = "A module for grinding rails using a collection of parts"

@@ -2,13 +2,11 @@
   "name": "RailPlace",
   "tree": {
     "$className": "DataModel",
-
     "Workspace": {
       "$className": "Workspace",
       "$ignoreUnknownInstances": true,
-      "$path": "test/Workspace"
+      "$path": "test/workspace"
     },
-
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
 
@@ -16,14 +14,13 @@
         "$path": "src"
       }
     },
-
     "StarterPlayer": {
       "$className": "StarterPlayer",
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
         "$ignoreUnknownInstances": true,
-        "$path": "test/Client"
+        "$path": "test/client"
       }
     }
   }

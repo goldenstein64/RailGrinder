@@ -1,3 +1,8 @@
 {
-  "Lua.diagnostics.enable": false
+  "robloxLsp.workspace.rojoProjectFile": "default.project.json",
+  "cSpell.words": [
+    "rbxlx",
+    "Roblox",
+    "Rojo"
+  ]
 }

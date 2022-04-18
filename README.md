@@ -1,5 +1,5 @@
 # RailProject
-
+<!--moonwave-hide-before-this-line-->
 Directly inspired from [a reply I made](https://devforum.roblox.com/t/rail-grinding-system/285666/9) on how to create a rail grinding system.
 
 This is a module for calculating the position and velocity of an object traveling across a collection of attachment pairs. On its own, this does *not* implement how to actually move an object, as there are many ways to do so and can be expanded upon very easily.

@@ -87,8 +87,8 @@ function RailGrinder.new()
 		@within RailGrinder
 		@readonly
 
-		Describes how fast the position changes every update. If you want to change this, 
-		please use [RailGrinder:SetSpeed].
+		Describes how fast the position changes every update. Please use 
+		[RailGrinder:SetSpeed] to change this value.
 	]=]
 	self.Speed = 0
 

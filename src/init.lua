@@ -28,8 +28,8 @@ local events = setmetatable({}, { __mode = "k" })
 --[=[
 	@class RailGrinder
 
-	A helper class for calculating speed and position when grinding on a
-	set of linear points in 3D space.
+	A helper class for calculating position and velocity of an object traveling 
+	across a collection of attachment pairs.
 ]=]
 local RailGrinder = {}
 RailGrinder.__index = RailGrinder
@@ -45,6 +45,21 @@ RailGrinder.__index = RailGrinder
 --- Creates a new RailGrinder instance, which lets one "vessel" grind one rail.
 function RailGrinder.new()
 	local self = {}
+
+	local completedEvent = Instance.new("BindableEvent")
+	completedEvent.Name = "Completed"
+
+	local positionChangedEvent = Instance.new("BindableEvent")
+	positionChangedEvent.Name = "PositionChanged"
+
+	local partChangedEvent = Instance.new("BindableEvent")
+	partChangedEvent.Name = "PartChanged"
+
+	events[self] = {
+		Completed = completedEvent,
+		PositionChanged = positionChangedEvent,
+		PartChanged = partChangedEvent,
+	}
 
 	--[=[
 		@prop Enabled boolean
@@ -72,7 +87,7 @@ function RailGrinder.new()
 		@within RailGrinder
 		@readonly
 
-		How fast the position changes every update. If you want to change this, 
+		Describes how fast the position changes every update. If you want to change this, 
 		please use [RailGrinder:SetSpeed].
 	]=]
 	self.Speed = 0
@@ -91,9 +106,9 @@ function RailGrinder.new()
 		@within RailGrinder
 		@readonly
 
-		How fast the position changes every heartbeat with a direction. This
-		exists for the end-user, and only updates when [RailGrinder.CurrentPart] or
-		[RailGrinder.Speed] changes.
+		Describes how fast the position changes every update, represented as a 
+		Vector3 with a magnitude and direction. This exists for the end-user, and
+		only updates when [RailGrinder.CurrentPart] or [RailGrinder.Speed] changes.
 	]=]
 	self.Velocity = Vector3.new()
 
@@ -102,7 +117,7 @@ function RailGrinder.new()
 		@within RailGrinder
 		@private
 		
-		Describes where `RailGrinder.Position` is between [RailGrinder.CurrentPart].Prev
+		Describes where [RailGrinder.Position] is between [RailGrinder.CurrentPart].Prev
 		and [RailGrinder.CurrentPart].Next.
 	]=]
 	self.Alpha = 0
@@ -127,26 +142,11 @@ function RailGrinder.new()
 	]=]
 	self.Connection = nil
 
-	local completedEvent = Instance.new("BindableEvent")
-	completedEvent.Name = "Completed"
-
-	local positionChangedEvent = Instance.new("BindableEvent")
-	positionChangedEvent.Name = "PositionChanged"
-
-	local partChangedEvent = Instance.new("BindableEvent")
-	partChangedEvent.Name = "PartChanged"
-
-	events[self] = {
-		Completed = completedEvent,
-		PositionChanged = positionChangedEvent,
-		PartChanged = partChangedEvent,
-	}
-
 	--[=[
-		@prop Completed RBXScriptSignal
+		@prop Completed RBXScriptSignal<>
 		@within RailGrinder
 
-		Fires when this `RailGrinder` is disabled.
+		Fires when this `RailGrinder` has finished or is disabled.
 	]=]
 	self.Completed = completedEvent.Event
 
@@ -154,7 +154,7 @@ function RailGrinder.new()
 		@prop PositionChanged RBXScriptSignal<Vector3>
 		@within RailGrinder
 
-		Fires when this `RailGrinder`'s `Position` is updated.
+		Fires when [RailGrinder.Position] is updated.
 	]=]
 	self.PositionChanged = positionChangedEvent.Event
 
@@ -162,14 +162,15 @@ function RailGrinder.new()
 		@prop PartChanged RBXScriptSignal<RailPart>
 		@within RailGrinder
 
-		Fires when this `RailGrinder`'s `CurrentPart` is updated
+		Fires when [RailGrinder.CurrentPart] is updated
 	]=]
 	self.PartChanged = partChangedEvent.Event
 
 	--[=[
 		@prop UpdateCallback (number) -> ()
 		@within RailGrinder
-		The callback used when [RunService.Heartbeat] fires. This is bound
+
+		This function is called when [RunService.Heartbeat] fires. This is bound
 		automatically by [RailGrinder:Enable].
 	]=]
 	self.UpdateCallback = function(deltaTime)
@@ -183,19 +184,10 @@ end
 
 --[=[
 	Sets all properties required to start grinding the rail and starts updating
-	them using a connection to [RunService.Heartbeat].
+	them and firing events using a connection to [RunService.Heartbeat].
 
-	The properties updated are:
-	* [RailGrinder.Enabled]
-	* [RailGrinder.CurrentPart]
-	* [RailGrinder.CurrentPartLength]
-	* [RailGrinder.Speed]
-	* [RailGrinder.Velocity]
-	* [RailGrinder.Alpha]
-	* [RailGrinder.Position]
-	* [RailGrinder.Connection]
-
-	The `vessel` argument is only used to calculate the speed and alpha relative to `currentPart`, so it is optional.
+	The `vessel` argument is only used to calculate the speed and alpha relative 
+	to `currentPart`, so it is optional.
 
 	@param currentPart BasePart -- The instance the `vessel` is grinding on.
 	@param vessel BasePart? -- The instance grinding the rail.
@@ -224,8 +216,13 @@ function RailGrinder:Disable(): ()
 	end
 
 	self.Enabled = false
+	self:SetSpeed(0)
+
+	self.Alpha = 0
 	self.CurrentPart = nil
-	self.Speed = 0
+	self.CurrentPartLength = 0
+
+	self.Position = Vector3.new()
 
 	if self.Connection then
 		self.Connection:Disconnect()

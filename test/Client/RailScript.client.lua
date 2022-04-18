@@ -1,10 +1,10 @@
 local Workspace = game:GetService("Workspace")
-local ReplStorage = game:GetService("ReplicatedStorage")
 local ContextActionService = game:GetService("ContextActionService")
 local TagService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local RailGrinder = require(ReplStorage.RailGrinder)
+local RailGrinder = require(ReplicatedStorage.RailGrinder)
 
 local chr = script.Parent
 local humanoid: Humanoid = chr:WaitForChild("Humanoid")
@@ -46,15 +46,22 @@ humanoid.Touched:Connect(function(hit)
 	table.sort(railParts, compareByGrindOrder)
 
 	local i = table.find(railParts, hit)
-	function railGrinder.GetNextPart(direction)
-		i += direction
-		return railParts[i]
+
+	if railModel:GetAttribute("Loops") then
+		function railGrinder.GetNextPart(direction)
+			i = (i - 1 + direction) % #railParts + 1
+			return railParts[i]
+		end
+	else
+		function railGrinder.GetNextPart(direction)
+			i += direction
+			return railParts[i]
+		end
 	end
 
 	humanoid.Sit = true
 	bodyPosition.Parent = rootPart
-	railGrinder.CurrentPart = hit
-	railGrinder:Enable(rootPart)
+	railGrinder:Enable(hit, rootPart)
 
 	local speedMultiplier = railModel:GetAttribute("SpeedMultiplier")
 	if speedMultiplier then

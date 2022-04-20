@@ -281,6 +281,7 @@ function RailGrinder:Disable(): ()
 	end
 
 	self.Enabled = false
+	private[self].CompletedBindable:Fire()
 	self:SetSpeed(0)
 
 	self.Alpha = 0
@@ -292,8 +293,6 @@ function RailGrinder:Disable(): ()
 	if self.Connection then
 		self.Connection:Disconnect()
 	end
-
-	private[self].CompletedBindable:Fire()
 end
 
 --[=[

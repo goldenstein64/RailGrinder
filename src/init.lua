@@ -77,7 +77,11 @@ RailGrinder.__index = RailGrinder
 	attachment of one part has the same position as the `Prev` attachment of another part.
 ]=]
 
---- Creates a new RailGrinder instance, which lets one "vessel" grind one rail.
+--[=[
+	@tag Static
+
+	Creates a new RailGrinder instance, which lets one "vessel" grind one rail.
+]=]
 function RailGrinder.new()
 	local self = {}
 	private[self] = {}
@@ -229,7 +233,7 @@ function RailGrinder.new()
 	--[=[
 		@prop UpdateCallback (number) -> ()
 		@within RailGrinder
-		@readonly
+		@private
 
 		This function is called when [RunService.Heartbeat] fires. This is bound
 		automatically by [RailGrinder:Enable].
@@ -296,7 +300,9 @@ end
 	@param deltaTime number -- The amount of time that passed since last update.
 
 	A function that runs every [RunService.Heartbeat], this fires the
-	`PositionChanged` event once updated, fires [RailGrinder.Completed] once and calls [RailGrinder.GetNextPart] as needed.
+	[RailGrinder.PositionChanged] event after every update, fires 
+	[RailGrinder.Completed] once finished, and calls [RailGrinder.GetNextPart] 
+	when it needs new parts.
 ]=]
 function RailGrinder:Update(deltaTime: number): ()
 	local newAlpha = self.Alpha + deltaTime * self.Speed / self.CurrentPartLength

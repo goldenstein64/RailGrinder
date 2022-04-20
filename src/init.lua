@@ -162,8 +162,8 @@ function RailGrinder.new()
 		@within RailGrinder
 		@private
 
-		The [RunService.Heartbeat] connection used to update the [RailGrinder]
-		instance. If you want to disconnect this, use [RailGrinder:Disable].
+		The [RunService.Heartbeat] connection used to update position. The end-user
+		can disconnect this using [RailGrinder:Disable].
 	]=]
 	self.Connection = nil
 
@@ -174,6 +174,7 @@ function RailGrinder.new()
 		@prop CompletedBindable BindableEvent
 		@within RailGrinder
 		@private
+		@tag Events
 
 		Holds the [RailGrinder.Completed] event.
 	]=]
@@ -195,6 +196,7 @@ function RailGrinder.new()
 		@prop PositionChangedBindable BindableEvent
 		@within RailGrinder
 		@private
+		@tag Events
 
 		Holds the [RailGrinder.PositionChanged] event.
 	]=]
@@ -216,6 +218,7 @@ function RailGrinder.new()
 		@prop PartChangedBindable BindableEvent
 		@within RailGrinder
 		@private
+		@tag Events
 
 		Holds the [RailGrinder.PartChanged] event.
 	]=]
@@ -236,7 +239,7 @@ function RailGrinder.new()
 		@private
 
 		This function is called when [RunService.Heartbeat] fires. This is bound
-		automatically by [RailGrinder:Enable].
+		by [RailGrinder:Enable].
 	]=]
 	private[self].UpdateCallback = function(deltaTime)
 		self:Update(deltaTime)

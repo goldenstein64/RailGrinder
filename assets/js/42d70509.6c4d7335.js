@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[413],{97868:function(e){e.exports=JSON.parse('{"sourceUrl":"https://github.com/goldenstein64/RailGrinder/blob/main","baseUrl":"/RailGrinder/","classOrder":[],"apiCategories":["Events"]}')}}]);

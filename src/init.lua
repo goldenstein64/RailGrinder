@@ -1,29 +1,64 @@
 local RunService = game:GetService("RunService")
 
+--[=[
+	@within RailGrinder
+	@private
+	
+	Returns the length of a RailPart
+]=]
 local function getLength(part: BasePart): number
 	return (part.Next.Position - part.Prev.Position).Magnitude
 end
 
+--[=[
+	@within RailGrinder
+	@private
+
+	Returns the direction of the [RailPart] in world space, with a magnitude equal to the length of the part
+]=]
 local function getDelta(part: BasePart): Vector3
 	return part.Next.WorldPosition - part.Prev.WorldPosition
 end
 
+--[=[
+	@within RailGrinder
+	@private
+
+	Returns a position on the [RailPart] with the given alpha.
+
+	* 0 = CurrentPart.Prev
+	* 1 = CurrentPart.Next
+]=]
 local function getPosition(currentPart: BasePart, alpha: number): Vector3
 	return currentPart.Prev.WorldPosition:Lerp(currentPart.Next.WorldPosition, alpha)
 end
 
-local function getInitialAlpha(currentPart: BasePart, vessel: BasePart): number
+--[=[
+	@within RailGrinder
+	@private
+
+	Returns a number between 0-1 indicating the point on the `currentPart` 
+	closest to the given `position` when using [RailGrinder.getPosition].
+]=]
+local function getInitialAlpha(currentPart: BasePart, position: Vector3): number
 	local delta = getDelta(currentPart)
-	local distanceFromPrev = vessel.Position - currentPart.Prev.WorldPosition
+	local distanceFromPrev = position - currentPart.Prev.WorldPosition
 	return delta.Unit:Dot(distanceFromPrev) / delta.Magnitude
 end
 
-local function getSpeedRelativeTo(currentPart: BasePart, vessel: BasePart): number
+--[=[
+	@within RailGrinder
+	@private
+
+	Returns a number describing what speed something with the given 
+	`worldVelocity` is going on `currentPart`.
+]=]
+local function getInitialSpeed(currentPart: BasePart, worldVelocity: Vector3): number
 	local delta = getDelta(currentPart)
-	return delta.Unit:Dot(vessel.AssemblyLinearVelocity)
+	return delta.Unit:Dot(worldVelocity)
 end
 
-local events = setmetatable({}, { __mode = "k" })
+local private = setmetatable({}, { __mode = "k" })
 
 --[=[
 	@class RailGrinder
@@ -45,21 +80,7 @@ RailGrinder.__index = RailGrinder
 --- Creates a new RailGrinder instance, which lets one "vessel" grind one rail.
 function RailGrinder.new()
 	local self = {}
-
-	local completedEvent = Instance.new("BindableEvent")
-	completedEvent.Name = "Completed"
-
-	local positionChangedEvent = Instance.new("BindableEvent")
-	positionChangedEvent.Name = "PositionChanged"
-
-	local partChangedEvent = Instance.new("BindableEvent")
-	partChangedEvent.Name = "PartChanged"
-
-	events[self] = {
-		Completed = completedEvent,
-		PositionChanged = positionChangedEvent,
-		PartChanged = partChangedEvent,
-	}
+	private[self] = {}
 
 	--[=[
 		@prop Enabled boolean
@@ -142,38 +163,78 @@ function RailGrinder.new()
 	]=]
 	self.Connection = nil
 
+	local completedEvent = Instance.new("BindableEvent")
+	completedEvent.Name = "Completed"
+
+	--[=[
+		@prop CompletedBindable BindableEvent
+		@within RailGrinder
+		@private
+
+		Holds the [RailGrinder.Completed] event.
+	]=]
+	private[self].CompletedBindable = completedEvent
+
 	--[=[
 		@prop Completed RBXScriptSignal<>
 		@within RailGrinder
+		@tag Events
 
 		Fires when this `RailGrinder` has finished or is disabled.
 	]=]
 	self.Completed = completedEvent.Event
 
+	local positionChangedEvent = Instance.new("BindableEvent")
+	positionChangedEvent.Name = "PositionChanged"
+
+	--[=[
+		@prop PositionChangedBindable BindableEvent
+		@within RailGrinder
+		@private
+
+		Holds the [RailGrinder.PositionChanged] event.
+	]=]
+	private[self].PositionChangedBindable = positionChangedEvent
+
 	--[=[
 		@prop PositionChanged RBXScriptSignal<Vector3>
 		@within RailGrinder
+		@tag Events
 
 		Fires when [RailGrinder.Position] is updated.
 	]=]
 	self.PositionChanged = positionChangedEvent.Event
 
+	local partChangedEvent = Instance.new("BindableEvent")
+	partChangedEvent.Name = "PartChanged"
+
+	--[=[
+		@prop PartChangedBindable BindableEvent
+		@within RailGrinder
+		@private
+
+		Holds the [RailGrinder.PartChanged] event.
+	]=]
+	private[self].PartChangedBindable = partChangedEvent
+
 	--[=[
 		@prop PartChanged RBXScriptSignal<RailPart>
 		@within RailGrinder
+		@tag Events
 
-		Fires when [RailGrinder.CurrentPart] is updated
+		Fires when [RailGrinder.CurrentPart] is updated.
 	]=]
 	self.PartChanged = partChangedEvent.Event
 
 	--[=[
 		@prop UpdateCallback (number) -> ()
 		@within RailGrinder
+		@readonly
 
 		This function is called when [RunService.Heartbeat] fires. This is bound
 		automatically by [RailGrinder:Enable].
 	]=]
-	self.UpdateCallback = function(deltaTime)
+	private[self].UpdateCallback = function(deltaTime)
 		self:Update(deltaTime)
 	end
 
@@ -183,14 +244,14 @@ function RailGrinder.new()
 end
 
 --[=[
+	@param currentPart BasePart -- The instance the `vessel` is grinding on.
+	@param vessel BasePart? -- The instance grinding the rail.
+
 	Sets all properties required to start grinding the rail and starts updating
 	them and firing events using a connection to [RunService.Heartbeat].
 
-	The `vessel` argument is only used to calculate the speed and alpha relative 
+	The `vessel` argument is only used to calculate the speed and position relative 
 	to `currentPart`, so it is optional.
-
-	@param currentPart BasePart -- The instance the `vessel` is grinding on.
-	@param vessel BasePart? -- The instance grinding the rail.
 ]=]
 function RailGrinder:Enable(currentPart: BasePart, vessel: BasePart?): ()
 	self.Enabled = true
@@ -198,15 +259,15 @@ function RailGrinder:Enable(currentPart: BasePart, vessel: BasePart?): ()
 	self.CurrentPartLength = getLength(currentPart)
 
 	if vessel then
-		local speed = getSpeedRelativeTo(currentPart, vessel)
+		local speed = getInitialSpeed(currentPart, vessel.AssemblyLinearVelocity)
 		self:SetSpeed(speed)
 
-		self.Alpha = getInitialAlpha(currentPart, vessel)
+		self.Alpha = getInitialAlpha(currentPart, vessel.Position)
 	end
 
 	self.Position = getPosition(currentPart, self.Alpha)
 
-	self.Connection = RunService.Heartbeat:Connect(self.UpdateCallback)
+	self.Connection = RunService.Heartbeat:Connect(private[self].UpdateCallback)
 end
 
 --- Stops updating variables and firing events.
@@ -228,14 +289,14 @@ function RailGrinder:Disable(): ()
 		self.Connection:Disconnect()
 	end
 
-	events[self].Completed:Fire()
+	private[self].CompletedBindable:Fire()
 end
 
 --[=[
-	A function that runs every `RunService.Heartbeat`, this fires the
-	`PositionChanged` event when finished and calls `GetNextPart` as needed.
-
 	@param deltaTime number -- The amount of time that passed since last update.
+
+	A function that runs every [RunService.Heartbeat], this fires the
+	`PositionChanged` event once updated, fires [RailGrinder.Completed] once and calls [RailGrinder.GetNextPart] as needed.
 ]=]
 function RailGrinder:Update(deltaTime: number): ()
 	local newAlpha = self.Alpha + deltaTime * self.Speed / self.CurrentPartLength
@@ -265,18 +326,18 @@ function RailGrinder:Update(deltaTime: number): ()
 	if nodeDistance ~= 0 then
 		local delta = getDelta(self.CurrentPart)
 		self.Velocity = delta.Unit * self.Speed
-		events[self].PartChanged:Fire(self.CurrentPart)
+		private[self].PartChangedBindable:Fire(self.CurrentPart)
 	end
 
 	self.Alpha = newAlpha
 	self.Position = getPosition(self.CurrentPart, self.Alpha)
-	events[self].PositionChanged:Fire(self.Position)
+	private[self].PositionChangedBindable:Fire(self.Position)
 end
 
 --[=[
-	Sets how fast the position should change
-
 	@param newSpeed number -- The new speed the RailGrinder should update at
+
+	Sets how fast the position should change
 ]=]
 function RailGrinder:SetSpeed(newSpeed: number): ()
 	if self.Speed == newSpeed then
@@ -290,11 +351,16 @@ end
 
 -- selene: allow(unused_variable)
 --[=[
-	The callback used to get the next part once the vessel has grinded to
-	the end of the current part.
+	@param direction -1 | 1 -- Which direction the next part should come from.
+	@return RailPart? -- The next part to grind on.
+	
+	This callback is used to get the next part when the new position is beyond 
+	the extents of the current part.
 
-	@param direction number -- Which direction off the current part the character grinded off to
-	@return Instance? -- The next part to grind on. Returning `nil` disables the RailGrinder instance.
+	* Back end means `direction = -1`. 
+	* Front end means `direction = 1`.
+
+	Returning `nil` disables the instance.
 ]=]
 function RailGrinder.GetNextPart(direction: number): Instance?
 	return nil

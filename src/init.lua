@@ -155,7 +155,7 @@ function RailGrinder.new()
 		The distance between [RailGrinder.CurrentPart].Prev and 
 		[RailGrinder.CurrentPart].Next.
 	]=]
-	self.CurrentPartLength = 0
+	private[self].CurrentPartLength = 0
 
 	--[=[
 		@prop Connection RBXScriptConnection?
@@ -260,7 +260,7 @@ end
 function RailGrinder:Enable(currentPart: BasePart, vessel: BasePart?): ()
 	self.Enabled = true
 	self.CurrentPart = currentPart
-	self.CurrentPartLength = getLength(currentPart)
+	private[self].CurrentPartLength = getLength(currentPart)
 
 	if vessel then
 		local speed = getInitialSpeed(currentPart, vessel.AssemblyLinearVelocity)
@@ -286,7 +286,7 @@ function RailGrinder:Disable(): ()
 
 	self.Alpha = 0
 	self.CurrentPart = nil
-	self.CurrentPartLength = 0
+	private[self].CurrentPartLength = 0
 
 	self.Position = Vector3.new()
 
@@ -304,11 +304,14 @@ end
 	when it needs new parts.
 ]=]
 function RailGrinder:Update(deltaTime: number): ()
-	local newAlpha = self.Alpha + deltaTime * self.Speed / self.CurrentPartLength
+	local currentPartLength = private[self].CurrentPartLength
+	local currentPart = self.CurrentPart
 
-	local nodeDistance = math.floor(newAlpha)
+	local newAlpha = self.Alpha + deltaTime * self.Speed / currentPartLength
+
+	local partChanged = math.floor(newAlpha) ~= 0
 	local incr = math.sign(newAlpha)
-	for _ = 1, math.abs(nodeDistance) do
+	while math.floor(newAlpha) ~= 0 do
 		local newPart = self.GetNextPart(incr)
 		if not newPart then
 			self:Disable()
@@ -318,24 +321,27 @@ function RailGrinder:Update(deltaTime: number): ()
 		local newPartLength = getLength(newPart)
 		if incr == 1 then
 			newAlpha -= incr
-			newAlpha *= self.CurrentPartLength / newPartLength
-		elseif incr == -1 then
-			newAlpha *= self.CurrentPartLength / newPartLength
+			newAlpha *= currentPartLength / newPartLength
+		else
+			newAlpha *= currentPartLength / newPartLength
 			newAlpha -= incr
 		end
 
-		self.CurrentPartLength = newPartLength
-		self.CurrentPart = newPart
+		currentPartLength = newPartLength
+		currentPart = newPart
 	end
 
-	if nodeDistance ~= 0 then
-		local delta = getDelta(self.CurrentPart)
+	if partChanged then
+		local delta = getDelta(currentPart)
 		self.Velocity = delta.Unit * self.Speed
-		private[self].PartChangedBindable:Fire(self.CurrentPart)
+
+		private[self].CurrentPartLength = currentPartLength
+		self.CurrentPart = currentPart
+		private[self].PartChangedBindable:Fire(currentPart)
 	end
 
 	self.Alpha = newAlpha
-	self.Position = getPosition(self.CurrentPart, self.Alpha)
+	self.Position = getPosition(currentPart, self.Alpha)
 	private[self].PositionChangedBindable:Fire(self.Position)
 end
 

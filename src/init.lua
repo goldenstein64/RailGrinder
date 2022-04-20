@@ -145,7 +145,7 @@ function RailGrinder.new()
 		Describes where [RailGrinder.Position] is between [RailGrinder.CurrentPart].Prev
 		and [RailGrinder.CurrentPart].Next.
 	]=]
-	self.Alpha = 0
+	private[self].Alpha = 0
 
 	--[=[
 		@prop CurrentPartLength number
@@ -165,7 +165,7 @@ function RailGrinder.new()
 		The [RunService.Heartbeat] connection used to update position. The end-user
 		can disconnect this using [RailGrinder:Disable].
 	]=]
-	self.Connection = nil
+	private[self].Connection = nil
 
 	local completedEvent = Instance.new("BindableEvent")
 	completedEvent.Name = "Completed"
@@ -269,12 +269,12 @@ function RailGrinder:Enable(currentPart: BasePart, vessel: BasePart?): ()
 		local speed = getInitialSpeed(currentPart, vessel.AssemblyLinearVelocity)
 		self:SetSpeed(speed)
 
-		self.Alpha = getInitialAlpha(currentPart, vessel.Position)
+		private[self].Alpha = getInitialAlpha(currentPart, vessel.Position)
 	end
 
-	self.Position = getPosition(currentPart, self.Alpha)
+	self.Position = getPosition(currentPart, private[self].Alpha)
 
-	self.Connection = RunService.Heartbeat:Connect(private[self].UpdateCallback)
+	private[self].Connection = RunService.Heartbeat:Connect(private[self].UpdateCallback)
 end
 
 --- Stops updating variables and firing events.
@@ -287,14 +287,15 @@ function RailGrinder:Disable(): ()
 	private[self].CompletedBindable:Fire()
 	self:SetSpeed(0)
 
-	self.Alpha = 0
+	private[self].Alpha = 0
 	self.CurrentPart = nil
 	private[self].CurrentPartLength = 0
 
 	self.Position = Vector3.new()
 
-	if self.Connection then
-		self.Connection:Disconnect()
+	if private[self].Connection then
+		private[self].Connection:Disconnect()
+		private[self].Connection = nil
 	end
 end
 
@@ -310,7 +311,7 @@ function RailGrinder:Update(deltaTime: number): ()
 	local currentPartLength = private[self].CurrentPartLength
 	local currentPart = self.CurrentPart
 
-	local newAlpha = self.Alpha + deltaTime * self.Speed / currentPartLength
+	local newAlpha = private[self].Alpha + deltaTime * self.Speed / currentPartLength
 
 	local partChanged = math.floor(newAlpha) ~= 0
 	local incr = math.sign(newAlpha)
@@ -343,8 +344,8 @@ function RailGrinder:Update(deltaTime: number): ()
 		private[self].PartChangedBindable:Fire(currentPart)
 	end
 
-	self.Alpha = newAlpha
-	self.Position = getPosition(currentPart, self.Alpha)
+	private[self].Alpha = newAlpha
+	self.Position = getPosition(currentPart, newAlpha)
 	private[self].PositionChangedBindable:Fire(self.Position)
 end
 

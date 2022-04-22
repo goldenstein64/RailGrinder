@@ -5,7 +5,10 @@
     "Size": [12, 1, 12],
 
     "Anchored": true,
-    "CanCollide": true
+    "CanCollide": true,
+
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth"
   },
 
   "Children": [

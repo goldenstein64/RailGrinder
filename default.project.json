@@ -21,6 +21,11 @@
         "$className": "StarterCharacterScripts",
         "$ignoreUnknownInstances": true,
         "$path": "test/client"
+      },
+
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true
       }
     }
   }

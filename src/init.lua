@@ -372,8 +372,8 @@ end
 	This callback is used to get the next part when the new position is beyond 
 	the extents of the current part.
 
-	* Back end means `direction = -1`. 
-	* Front end means `direction = 1`.
+	* `direction = -1` means back end. 
+	* `direction = 1` means front end.
 
 	Returning `nil` disables the instance.
 ]=]
